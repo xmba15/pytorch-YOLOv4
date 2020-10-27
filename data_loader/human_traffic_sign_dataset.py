@@ -34,6 +34,7 @@ class HumanTrafficSignDataset(Dataset):
             self._label_data_path_map[cls_name] = get_all_files_with_format_from_path(
                 os.path.join(self._data_path, cls_name), ".json"
             )
+            assert len(self._image_data_path_map[cls_name]) == len(self._label_data_path_map[cls_name])
 
         self._merge_all_data()
 
