@@ -6,6 +6,7 @@ __all__ = [
     "human_sort",
     "get_all_files_with_format_from_path",
     "visualize_bboxes",
+    "create_label_me_json_dict"
 ]
 
 
@@ -73,3 +74,29 @@ def visualize_bboxes(image, classes, colors, all_bboxes, all_category_ids):
         )
 
     return image
+
+
+def create_label_me_json_dict(img_path, img_name, img_height, img_width, bboxes, labels):
+    import labelme
+    import base64
+
+    assert len(bboxes) == len(labels)
+
+    json_dict = {}
+    json_dict["imagePath"] = img_name
+    json_dict["imageHeight"] = img_height
+    json_dict["imageWidth"] = img_width
+    json_dict["imageData"] = base64.b64encode(labelme.LabelFile.load_image_file(img_path)).decode('utf-8')
+    json_dict["shapes"] = []
+    for bbox, label in zip(bboxes, labels):
+        cur_shape = {}
+        cur_shape["label"] = label
+        cur_shape["shape_type"] = "rectangle"
+        xmin, ymin, xmax, ymax = bbox
+        cur_shape["points"] = [[xmin, ymin], [xmax, ymax]]
+        cur_shape["group_id"] = None
+        cur_shape["flags"] = {}
+
+        json_dict["shapes"].append(cur_shape)
+
+    return json_dict

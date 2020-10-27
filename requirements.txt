@@ -10,3 +10,4 @@ scikit-image
 opencv_python
 pycocotools
 albumentations
+labelme
