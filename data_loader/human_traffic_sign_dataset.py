@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import cv2
+import tqdm
 from torch.utils.data.dataset import Dataset
 from .dataset_utility import *
 
@@ -58,6 +59,16 @@ class HumanTrafficSignDataset(Dataset):
     def __len__(self):
         return len(self._all_image_paths)
 
+    def get_data_distribution(self):
+        data_dist_map = dict((cur_label, 0) for cur_label in self._classes)
+
+        for idx in tqdm.tqdm(range(self.__len__())):
+            _, _cur_indices = self._load_one_json(self._all_label_paths[idx])
+            for cur_idx in _cur_indices:
+                data_dist_map[self._classes[cur_idx]] += 1
+
+        return data_dist_map
+
     def _merge_all_data(self):
         self._all_image_paths = []
         self._all_label_paths = []
@@ -102,3 +113,7 @@ class HumanTrafficSignDataset(Dataset):
             label_indices.append(cls_idx)
 
         return bboxes, label_indices
+
+    @property
+    def classes(self):
+        return self._classes
