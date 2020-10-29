@@ -66,24 +66,35 @@ class HumanTrafficSignDataset(BaseDataset):
         transformations: list,
         output_path: str,
         seed_value=2020,
-        multiplication_factor=1.9,
+        multiplication_factor=1.2,
         min_size=700,
     ):
         random.seed(seed_value)
 
         assert len(transformations) > 0
 
+        def _get_data_distribution_one_label():
+            _data_distribution = {}
+            for cls_name in self._classes:
+                _count = 0
+                for label_path in tqdm.tqdm(self._label_data_path_map[cls_name]):
+                    _cur_bboxes, _ = self._load_one_ground_truth_file(label_path, box_normalized=False)
+                    if len(_cur_bboxes) == 1:
+                        _count += 1
+                _data_distribution[cls_name] = _count
+            return _data_distribution
+
         image_num_map = {}
         for cls_name in self._classes:
             image_num_map[cls_name] = len(self._image_data_path_map[cls_name])
             print("class: {}, num images: {}".format(cls_name, len(self._image_data_path_map[cls_name])))
 
-        data_distribution = self.get_data_distribution()
-        max_num = max(data_distribution.values())
+        data_distribution = _get_data_distribution_one_label()
+        max_num = max(image_num_map.values())
         max_num = int(multiplication_factor * max_num)
         oversample_num_map = dict(
-            (cls_name, math.ceil((max_num - num_samples) / image_num_map[cls_name]))
-            for (cls_name, num_samples) in data_distribution.items()
+            (cls_name, math.ceil((max_num - num_samples) / data_distribution[cls_name]))
+            for (cls_name, num_samples) in image_num_map.items()
         )
         print(oversample_num_map)
 
@@ -103,7 +114,8 @@ class HumanTrafficSignDataset(BaseDataset):
                 _transformations.extend(
                     [
                         albumentations.HorizontalFlip(p=0.7),
-                        albumentations.Rotate(limit=10, p=0.5),
+                        albumentations.Rotate(limit=(-5, 5), p=0.5, border_mode=cv2.BORDER_CONSTANT,
+                                              interpolation=cv2.INTER_CUBIC, mask_value=0),
                     ]
                 )
 
@@ -156,8 +168,8 @@ class HumanTrafficSignDataset(BaseDataset):
                     try:
                         while (
                             len(_transformed_bboxes) == 0
-                            or aug_bbox_width / orig_bbox_width < 0.9
-                            or aug_bbox_height / orig_bbox_height < 0.9
+                            or aug_bbox_width / orig_bbox_width < 0.95
+                            or aug_bbox_height / orig_bbox_height < 0.95
                         ):
                             _transformed = _crop_transform(
                                 image=_cur_image,
