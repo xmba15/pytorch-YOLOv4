@@ -38,20 +38,26 @@ def main():
 
     transforms = [
         albumentations.MotionBlur(p=0.5),
-        albumentations.Rotate(p=0.5, limit=(-5, 5)),
-        albumentations.Rotate(limit=(-5, 5), p=0.5, border_mode=cv2.BORDER_CONSTANT,
-                              interpolation=cv2.INTER_CUBIC, mask_value=0),
+        albumentations.Rotate(
+            limit=(-5, 5),
+            p=0.5,
+            border_mode=cv2.BORDER_CONSTANT,
+            interpolation=cv2.INTER_CUBIC,
+            mask_value=0,
+        ),
         albumentations.RandomBrightness(p=0.5, limit=(0.0, 0.2)),
         albumentations.IAASharpen(p=0.5, alpha=(0.05, 0.2)),
         albumentations.CLAHE(p=0.5),
-        albumentations.RandomShadow(p=0.1),
         albumentations.FancyPCA(p=0.5),
         albumentations.RandomGamma(p=0.5),
+        albumentations.RandomContrast(p=0.5),
         albumentations.RGBShift(p=0.5),
+        albumentations.Cutout(p=0.5, num_holes=50),
+        albumentations.RandomShadow(p=0.3),
     ]
 
     dataset = HumanTrafficSignDataset(data_path=args.data_path, train=True)
-    dataset.oversample_data(transforms, args.output_path)
+    dataset.oversample_data(transforms, args.output_path, multiplication_factor=1.9)
 
 
 if __name__ == "__main__":

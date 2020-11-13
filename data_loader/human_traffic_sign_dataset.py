@@ -66,7 +66,7 @@ class HumanTrafficSignDataset(BaseDataset):
         transformations: list,
         output_path: str,
         seed_value=2020,
-        multiplication_factor=1.2,
+        multiplication_factor=1.7,
         min_size=700,
     ):
         random.seed(seed_value)
@@ -84,18 +84,15 @@ class HumanTrafficSignDataset(BaseDataset):
                 _data_distribution[cls_name] = _count
             return _data_distribution
 
-        image_num_map = {}
-        for cls_name in self._classes:
-            image_num_map[cls_name] = len(self._image_data_path_map[cls_name])
-            print("class: {}, num images: {}".format(cls_name, len(self._image_data_path_map[cls_name])))
-
+        total_label_map = self.get_data_distribution()
         data_distribution = _get_data_distribution_one_label()
-        max_num = max(image_num_map.values())
+        max_num = max(total_label_map.values())
         max_num = int(multiplication_factor * max_num)
         oversample_num_map = dict(
             (cls_name, math.ceil((max_num - num_samples) / data_distribution[cls_name]))
-            for (cls_name, num_samples) in image_num_map.items()
+            for (cls_name, num_samples) in total_label_map.items()
         )
+        oversample_num_map["Human"] = 1
         print(oversample_num_map)
 
         _bbox_params = albumentations.BboxParams(
@@ -114,8 +111,13 @@ class HumanTrafficSignDataset(BaseDataset):
                 _transformations.extend(
                     [
                         albumentations.HorizontalFlip(p=0.7),
-                        albumentations.Rotate(limit=(-5, 5), p=0.5, border_mode=cv2.BORDER_CONSTANT,
-                                              interpolation=cv2.INTER_CUBIC, mask_value=0),
+                        albumentations.Rotate(
+                            limit=(-5, 5),
+                            p=0.5,
+                            border_mode=cv2.BORDER_CONSTANT,
+                            interpolation=cv2.INTER_CUBIC,
+                            mask_value=0,
+                        ),
                     ]
                 )
 

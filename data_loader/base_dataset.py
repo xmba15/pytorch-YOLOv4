@@ -42,29 +42,51 @@ class BaseDataset(abc.ABC):
 
         return data_dist_map
 
-    def create_yolo_train_data(self, output_path):
+    def create_yolo_train_data(self, output_path, sub_labels=[], ignore_ratio_thresh=1.0):
+        if len(sub_labels) == 0:
+            print("sub labels empty")
+            return
+
+        for label in sub_labels:
+            if label not in self._classes:
+                print("{} label does not exist in this dataset".format(label))
+                return
+
         for image_path, label_path in zip(tqdm.tqdm(self._all_image_paths), self._all_label_paths):
-            os.system("cp {} {}".format(image_path, output_path))
             _base_name = image_path.split("/")[-1].split(".")[0]
             _new_label_name = _base_name + ".txt"
             _new_label_path = os.path.join(output_path, _new_label_name)
 
             _cur_bboxes, _cur_indices = self._load_one_ground_truth_file(label_path, box_normalized=True)
-            with open(_new_label_path, "w") as f:
-                for _cur_box, _cur_idx in zip(_cur_bboxes, _cur_indices):
-                    xmin, ymin, xmax, ymax = self._mod_bbox(_cur_box)
-                    xcenter = (xmin + xmax) / 2
-                    ycenter = (ymin + ymax) / 2
-                    width = xmax - xmin
-                    height = ymax - ymin
 
-                    f.write("{} {} {} {} {}".format(_cur_idx, xcenter, ycenter, width, height))
+            write_content = ""
+            for _cur_box, _cur_idx in zip(_cur_bboxes, _cur_indices):
+                if self._classes[_cur_idx] not in sub_labels:
+                    continue
 
-    @property
+                new_idx = sub_labels.index(self._classes[_cur_idx])
+
+                xmin, ymin, xmax, ymax = self._mod_bbox(_cur_box)
+                xcenter = (xmin + xmax) / 2
+                ycenter = (ymin + ymax) / 2
+                width = xmax - xmin
+                height = ymax - ymin
+
+                if width > ignore_ratio_thresh or height > ignore_ratio_thresh:
+                    continue
+
+                write_content += "{} {} {} {} {}\n".format(new_idx, xcenter, ycenter, width, height)
+
+            if len(write_content) != 0:
+                with open(_new_label_path, "w") as f:
+                    f.write(write_content)
+                    os.system("cp {} {}".format(image_path, output_path))
+
+    @ property
     def classes(self):
         return self._classes
 
-    @abc.abstractmethod
+    @ abc.abstractmethod
     def _load_one_ground_truth_file(self, ground_truth_file_path, box_normalized=True):
         return NotImplemented
 

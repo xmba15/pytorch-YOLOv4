@@ -6,7 +6,7 @@ __all__ = [
     "human_sort",
     "get_all_files_with_format_from_path",
     "visualize_bboxes",
-    "create_label_me_json_dict"
+    "create_label_me_json_dict",
 ]
 
 
@@ -32,9 +32,7 @@ def human_sort(s):
     return [int(c) if c.isdigit() else c.lower() for c in re.split(pattern, s)]
 
 
-def get_all_files_with_format_from_path(
-    dir_path, suffix_format, concat_dir_path=True, use_human_sort=True
-):
+def get_all_files_with_format_from_path(dir_path, suffix_format, concat_dir_path=True, use_human_sort=True):
     import os
 
     all_files = [elem for elem in os.listdir(dir_path) if elem.endswith(suffix_format)]
@@ -86,7 +84,7 @@ def create_label_me_json_dict(img_path, img_name, img_height, img_width, bboxes,
     json_dict["imagePath"] = img_name
     json_dict["imageHeight"] = img_height
     json_dict["imageWidth"] = img_width
-    json_dict["imageData"] = base64.b64encode(labelme.LabelFile.load_image_file(img_path)).decode('utf-8')
+    json_dict["imageData"] = base64.b64encode(labelme.LabelFile.load_image_file(img_path)).decode("utf-8")
     json_dict["shapes"] = []
     for bbox, label in zip(bboxes, labels):
         cur_shape = {}

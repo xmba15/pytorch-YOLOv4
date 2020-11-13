@@ -24,6 +24,18 @@ def get_args():
         dest="output_path",
     )
     parser.add_argument(
+        "-sub_labels",
+        type=str,
+        default="Human,SlowStart,SlowEnd,Stop",
+        dest="sub_labels",
+    )
+    parser.add_argument(
+        "-ignore_ratio_thresh",
+        type=float,
+        default=1.0,
+        dest="ignore_ratio_thresh",
+    )
+    parser.add_argument(
         "-train",
         action="store_true"
     )
@@ -37,7 +49,9 @@ def main():
 
     args = get_args()
     dataset = HumanTrafficSignDataset(data_path=args.data_path, train=args.train)
-    dataset.create_yolo_train_data(args.output_path)
+    sub_labels = args.sub_labels.split(",")
+    dataset.create_yolo_train_data(args.output_path, sub_labels=sub_labels,
+                                   ignore_ratio_thresh=args.ignore_ratio_thresh)
 
 
 if __name__ == "__main__":
